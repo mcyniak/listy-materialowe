@@ -1,6 +1,6 @@
 import { otworzSkan } from './src/strony.js';
 import { odczytajSkan } from './src/odczyt.js';
-import { skoroszyt, nazwaPliku } from './src/tabela.js';
+import { skoroszyt, nazwaPliku, uporzadkuj } from './src/tabela.js';
 
 const KLUCZ_LS = 'listy-materialowe:klucz';
 const ROWNOLEGLE = 4;
@@ -101,7 +101,7 @@ async function odczytaj(skan, tryb = 'szybki') {
     const { wynik, kosztUSD } = await odczytajSkan({ klucz: czytajKlucz(), skan: skan.zrodlo, nazwaPliku: skan.nazwa, tryb });
     skan.sekund = Math.round((performance.now() - start) / 1000);
     // Koszt sumuje się, gdy skan czytano najpierw zwykle, a potem dokładnie.
-    Object.assign(skan, { wynik, kosztUSD: (skan.kosztUSD || 0) + kosztUSD, stan: 'gotowe' });
+    Object.assign(skan, { wynik: uporzadkuj(wynik), kosztUSD: (skan.kosztUSD || 0) + kosztUSD, stan: 'gotowe' });
     zmieniono();
   } catch (e) {
     console.error(e);
@@ -135,10 +135,16 @@ $('odczytaj').addEventListener('click', async () => {
   pokazKomunikat(bledy ? `Gotowe. ${bledy === 1 ? 'Jednego skanu' : `${bledy} skanów`} nie udało się odczytać.` : 'Gotowe. Sprawdź podświetlone pozycje i pobierz tabelę.');
 });
 
-$('pobierz').addEventListener('click', () => {
+$('pobierz').addEventListener('click', async () => {
   const gotowe = skany.filter(s => s.stan === 'gotowe');
   const nazwa = nazwaPliku();
-  window.XLSX.writeFile(skoroszyt(window.XLSX, gotowe), nazwa);
+  const bufor = await skoroszyt(window.ExcelJS, gotowe).xlsx.writeBuffer();
+  const a = el('a', { download: nazwa, href: URL.createObjectURL(new Blob([bufor],
+    { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })) });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   pobranoPoZmianach = true;
   pokazKomunikat(`Zapisano tabelę „${nazwa}” w folderze Pobrane.`);
 });
@@ -307,7 +313,7 @@ function naglowekSkanu(skan) {
 
 const KOLUMNY_EDYTORA = [
   ['pozycja', 'Pozycja'], ['jednostka', 'Jedn.'], ['ilosc', 'Ilość'], ['dodatkowo', 'Dodatkowo'],
-  ['zaznaczenie', 'Zaznaczone'], ['poprawka', 'Poprawka na kartce'], ['uwagi', 'Uwagi']
+  ['poprawka', 'Poprawka na kartce'], ['uwagi', 'Uwagi']
 ];
 
 function pokazStrone(numer) {

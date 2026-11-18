@@ -76,7 +76,7 @@ Pola pozycji:
 - jednostka: wydrukowana jednostka (szt, mb, op, kpl); dla dopisków jednostka z dopisku albo pusty tekst.
 - ilosc: ręczny wpis w kolumnie ilości (na starszym wzorze kolumna "Pobrane"), dosłownie. Pusty tekst, gdy w wierszu jest tylko zaznaczenie albo poprawka bez ilości.
 - dodatkowo: ręczny wpis w kolumnie "Dodatkowo" (jest tylko na starszym wzorze), inaczej pusty tekst.
-- zaznaczenie: wydrukowane warianty zakreślone kółkiem w tym wierszu (np. "25A", "U-32"); kilka oddziel ", ".
+- zaznaczenie: wydrukowane warianty zakreślone kółkiem w tym wierszu, przepisane tak, jak są wydrukowane (np. "25A", "U-25", "FI 25"); gdy kółkiem objęto tylko część wariantu (np. samo "32" w "FI 32"), podaj cały wariant ("FI 32"). Kilka oddziel ", ". Pole "pozycja" zostaw z pełnym wydrukiem wszystkich wariantów - program sam zostawi w nazwie zakreślony.
 - poprawka: gdy wydrukowany tekst w wierszu przekreślono i dopisano inny, zapisz "stare → nowe" (np. "550 Wp → 480W"). Dopisek do nazwy bez skreślenia zapisz sam. Skreśloną ilość też opisz tutaj, np. "skreślone: 800".
 - dopisane: true dla pozycji napisanych ręcznie poza wydrukowanymi wierszami, false dla wierszy wydrukowanych.
 - pewnosc: "wysoka", "srednia" albo "niska" - na ile pewny jest odczyt odręcznych znaków i ich przypisanie do wiersza.

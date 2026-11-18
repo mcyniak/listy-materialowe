@@ -7,7 +7,8 @@ import { build } from 'esbuild';
 
 const katalog = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const PLIKI = [
-  ['node_modules/xlsx/dist/xlsx.full.min.js', 'public/vendor/xlsx.full.min.js'],
+  // ExcelJS - plik .xlsx z formatowaniem (kolory, zamrożony nagłówek, liczby).
+  ['node_modules/exceljs/dist/exceljs.min.js', 'public/vendor/exceljs.min.js'],
   ['node_modules/pdfjs-dist/build/pdf.min.mjs', 'public/vendor/pdf.min.mjs'],
   ['node_modules/pdfjs-dist/build/pdf.worker.min.mjs', 'public/vendor/pdf.worker.min.mjs'],
   // Czcionka interfejsu (licencja OFL), ta sama co w aplikacji audytowej.
