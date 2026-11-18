@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Listy materiałowe</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23cf171f'/%3E%3Cpath d='M10 9h12M10 14h12M10 19h7' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preload" href="vendor/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="pasek">
+    <div class="marka">
+      <img src="logo.png" alt="FlexiPower Group" class="logo">
+      <span class="kreska"></span>
+      <div>
+        <h1>Listy materiałowe</h1>
+        <p>Odczyt skanów do tabeli</p>
+      </div>
+    </div>
+    <button id="otworz-ustawienia" class="przycisk duch" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      Ustawienia
+    </button>
+  </header>
+
+  <main class="uklad">
+    <aside class="boczny">
+      <div class="boczny-gora">
+        <h2 class="tytul-sekcji">Skany <span id="licznik" class="licznik"></span></h2>
+        <label id="upuszczanie" class="upuszczanie">
+          <input id="pliki" type="file" accept="application/pdf,image/*" multiple hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <strong>Przeciągnij skany tutaj</strong>
+          <span>albo kliknij, aby wybrać pliki · PDF, JPG, PNG</span>
+        </label>
+        <ul id="lista" class="lista"></ul>
+      </div>
+      <div class="boczny-dol">
+        <div id="postep" class="postep" hidden>
+          <div class="postep-tekst"><span id="postep-opis"></span><span id="postep-proc"></span></div>
+          <div class="postep-pasek"><div id="postep-wypelnienie"></div></div>
+        </div>
+        <button id="odczytaj" class="przycisk glowny szeroki" type="button" disabled>Odczytaj skany</button>
+        <button id="pobierz" class="przycisk drugi szeroki" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0 4.5-4.5M12 16l-4.5-4.5"/><path d="M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1"/></svg>
+          Pobierz tabelę Excel
+        </button>
+        <p id="podsumowanie" class="podsumowanie"></p>
+      </div>
+    </aside>
+
+    <section id="podglad" class="podglad"></section>
+  </main>
+
+  <dialog id="ustawienia" class="okno">
+    <form method="dialog" id="ustawienia-form">
+      <h2>Ustawienia</h2>
+      <label class="pole">
+        <span>Klucz dostępu do usługi odczytu</span>
+        <input id="klucz" type="password" autocomplete="off" spellcheck="false" placeholder="Wklej klucz">
+        <small>Wpisuje się go raz na komputerze — zwykle robi to administrator. Klucz zostaje tylko w tej przeglądarce.</small>
+      </label>
+      <p id="koszt-sesji" class="drobny"></p>
+      <div class="okno-przyciski">
+        <button value="anuluj" class="przycisk duch" type="submit" formnovalidate>Anuluj</button>
+        <button value="zapisz" class="przycisk glowny" type="submit">Zapisz</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="komunikat" class="komunikat" role="status" aria-live="polite"></div>
+</body>
+</html>
