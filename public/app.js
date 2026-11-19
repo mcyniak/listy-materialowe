@@ -1,4 +1,5 @@
 import { otworzSkan } from './src/strony.js';
+import { czyZip, rozpakujZip } from './src/zip.js';
 import { odczytajSkan } from './src/odczyt.js';
 import { skoroszyt, nazwaPliku, uporzadkuj } from './src/tabela.js';
 
@@ -66,15 +67,31 @@ $('ustawienia').addEventListener('close', () => {
 });
 
 // --- dodawanie plików ----------------------------------------------------------
-function dodajPliki(pliki) {
-  let dodane = 0;
+async function dodajPliki(pliki) {
+  pliki = [...pliki];
+  const zDysku = [], problemy = [];
+  let zipow = 0;
   for (const plik of pliki) {
+    if (!czyZip(plik)) { zDysku.push(plik); continue; }
+    zipow++;
+    pokazKomunikat(`Rozpakowuję ${plik.name}…`);
+    try {
+      const { pliki: wyjete, pominiete } = await rozpakujZip(plik);
+      zDysku.push(...wyjete);
+      problemy.push(...pominiete);
+      if (!wyjete.length) problemy.push(`${plik.name} (brak skanów w środku)`);
+    } catch { problemy.push(plik.name); }
+  }
+  let dodane = 0;
+  for (const plik of zDysku) {
     if (!(plik.type === 'application/pdf' || plik.type.startsWith('image/'))) continue;
     if (skany.some(s => s.nazwa === plik.name && s.plik.size === plik.size)) continue;
     skany.push({ id: ++licznik, nazwa: plik.name, plik, stan: 'czeka' });
     dodane++;
   }
-  if (!dodane && pliki.length) pokazKomunikat('Te pliki są już na liście albo to nie są skany (PDF, JPG, PNG).');
+  if (problemy.length) pokazKomunikat(`Nie udało się otworzyć: ${problemy.join(', ')}.`);
+  else if (!dodane && pliki.length) pokazKomunikat('Te pliki są już na liście albo to nie są skany (PDF, JPG, PNG, ZIP).');
+  else if (zipow) pokazKomunikat(`Dodano ${dodane} ${dodane === 1 ? 'skan' : dodane % 10 >= 2 && dodane % 10 <= 4 && (dodane % 100 < 10 || dodane % 100 >= 20) ? 'skany' : 'skanów'}.`);
   if (!wybrany && skany.length) wybrany = skany[0].id;
   odswiez();
 }
@@ -223,7 +240,7 @@ function powitanie() {
     el('h2', { textContent: 'Odczyt list materiałowych' }),
     el('p', { textContent: 'Program przepisuje odręczne ilości ze skanów list materiałowych do tabeli Excel.' }),
     el('div', { className: 'kroki' },
-      ...[['Dodaj skany', 'Przeciągnij pliki PDF na pole po lewej albo kliknij je, by wybrać.'],
+      ...[['Dodaj skany', 'Przeciągnij pliki PDF albo całą paczkę ZIP na pole po lewej albo kliknij je, by wybrać.'],
         ['Odczytaj', 'Kliknij „Odczytaj skany”. Jeden skan to zwykle kilkanaście sekund.'],
         ['Sprawdź i pobierz', 'Popraw pozycje podświetlone na pomarańczowo i pobierz tabelę.']]
         .map(([t, o], i) => el('div', { className: 'krok' }, el('b', { textContent: i + 1 }), el('h3', { textContent: t }), el('p', { textContent: o })))));
