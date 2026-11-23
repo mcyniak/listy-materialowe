@@ -259,6 +259,15 @@ table.pozycje { border-collapse: collapse; width: 100%; font-size: 13.5px; }
 .pole small, .drobny { font-size: 12.5px; color: var(--tekst-2); }
 .drobny:empty { display: none; }
 .okno-przyciski { display: flex; justify-content: flex-end; gap: 8px; }
+.pole select { height: 42px; padding: 0 10px; border: 1px solid var(--linia-mocna); border-radius: var(--r-s); background: #fff; }
+.pole select:focus { outline: none; border-color: var(--marka); box-shadow: 0 0 0 3px var(--marka-tlo); }
+.lista-inwestycji { margin-top: -10px; max-height: 240px; overflow: auto; border: 1px solid var(--linia); border-radius: var(--r-s); }
+.lista-inwestycji:empty { display: none; }
+.lista-inwestycji button { display: block; width: 100%; padding: 9px 12px; border: 0; border-bottom: 1px solid var(--linia); background: none; text-align: left; cursor: pointer; }
+.lista-inwestycji button:last-child { border-bottom: 0; }
+.lista-inwestycji button:hover { background: var(--powierzchnia-2); }
+.lista-inwestycji button[aria-pressed="true"] { background: var(--marka-tlo); color: var(--marka-ciemna); font-weight: 600; }
+.lista-inwestycji p { margin: 0; padding: 9px 12px; color: var(--tekst-2); font-size: 13px; }
 
 /* --- komunikat w rogu --- */
 .komunikat {

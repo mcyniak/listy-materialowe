@@ -1,5 +1,6 @@
 // Odczytane skany -> wiersze tabeli -> sformatowany plik Excel (ExcelJS).
 // Moduł bez zależności od przeglądarki - testowany w Node.
+import { ZRODLO } from './tabela-materialowa.js';
 
 // --- liczby ----------------------------------------------------------------------
 const LICZBA = String.raw`\d+(?:[.,]\d+)?`;
@@ -216,3 +217,26 @@ export function nazwaPliku(data = new Date()) {
   return `Listy materiałowe ${data.getFullYear()}-${d(data.getMonth() + 1)}-${d(data.getDate())} ` +
     `${d(data.getHours())}-${d(data.getMinutes())}.xlsx`;
 }
+
+// --- Tabela materiałowa inwestycji (Arkusz Google, wspólny z aplikacją Audyt) ---
+
+const teraz = () => {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+/** Wiersze arkusza Pozycje tabeli materiałowej - te same dane co arkusz Pozycje w Excelu. */
+export function pozycjeDoTabeli(skany, rodzaj, zapisano = teraz()) {
+  return wiersze(skany).map(w => ({
+    Adres: w.adres, Rodzaj: rodzaj, 'Źródło': ZRODLO.lista, Sekcja: w.sekcja, Pozycja: w.pozycja, 'Jedn.': w.jednostka,
+    'Ilość': w.ilosc ?? '', Dodatkowo: w.dodatkowo ?? '', Uwagi: w.uwagi, Data: w.data, Ekipa: w.ekipa, Moc: w.moc,
+    'Do sprawdzenia': w.sprawdzic ? 'tak' : '', Plik: w.plik, Zapisano: zapisano
+  }));
+}
+
+/** Wiersze z poprzedniego zapisu tych samych skanów - do zastąpienia. */
+export const czyStaryWiersz = nazwyPlikow => {
+  const nazwy = new Set(nazwyPlikow);
+  return w => w['Źródło'] === ZRODLO.lista && nazwy.has(w.Plik);
+};

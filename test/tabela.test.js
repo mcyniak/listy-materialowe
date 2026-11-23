@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 import { wiersze, skoroszyt, nazwaPliku, liczba, nazwaZWariantem, uporzadkuj, razem } from '../public/src/tabela.js';
 import { SCHEMAT } from '../public/src/odczyt.js';
+import { pozycjeDoTabeli, czyStaryWiersz } from '../public/src/tabela.js';
+import { ZRODLO } from '../public/src/tabela-materialowa.js';
 
 const poz = (nadpisz) => ({
   strona: 1, sekcja: 'FALOWNIKI', pozycja: 'P3-10.0-SH', jednostka: 'szt', ilosc: '2', dodatkowo: '',
@@ -118,4 +120,20 @@ test('tryby jak w OZC: Haiku domyślnie, Opus dokładnie; koszt z progiem 100 ty
 test('Excel: liczby bez własnego formatu (w polskim Excelu "0.###" dawało "31,")', async () => {
   const wb = skoroszyt(ExcelJS, uporzadkowane());
   for (const ark of wb.worksheets) ark.eachRow(r => r.eachCell(c => assert.ok(!c.numFmt, `${ark.name}!${c.address}: ${c.numFmt}`)));
+});
+
+
+test('tabela materiałowa: wiersz na pozycję z adresem, źródłem i rodzajem', () => {
+  const skany = [{ nazwa: 'skan1.pdf', wynik: { adres: 'Testowa 1', moc: '10kW', data: '', ekipa: 'E2', pozycje: [
+    { sekcja: 'FALOWNIKI', pozycja: 'Falownik', jednostka: 'szt', ilosc: '1', dodatkowo: '', pewnosc: 'wysoka', uwagi: '' },
+    { sekcja: 'KABLE', pozycja: 'Kabel', jednostka: 'mb', ilosc: '30+5', dodatkowo: '', pewnosc: 'srednia', uwagi: '' }
+  ] } }];
+  const w = pozycjeDoTabeli(skany, 'PV', '23.11.2026 10:00');
+  assert.equal(w.length, 2);
+  assert.deepEqual([w[0].Adres, w[0].Rodzaj, w[0]['Źródło'], w[0]['Ilość'], w[0].Plik, w[0].Moc], ['Testowa 1', 'PV', ZRODLO.lista, 1, 'skan1.pdf', '10kW']);
+  assert.deepEqual([w[1]['Ilość'], w[1]['Do sprawdzenia'], w[1].Uwagi], [35, 'tak', 'na kartce: 30+5']);
+  const stary = czyStaryWiersz(['skan1.pdf']);
+  assert.equal(stary({ 'Źródło': ZRODLO.lista, Plik: 'skan1.pdf' }), true);
+  assert.equal(stary({ 'Źródło': ZRODLO.wniosek, Plik: 'skan1.pdf' }), false);
+  assert.equal(stary({ 'Źródło': ZRODLO.lista, Plik: 'skan2.pdf' }), false);
 });

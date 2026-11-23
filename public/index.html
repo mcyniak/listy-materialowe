@@ -48,6 +48,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0 4.5-4.5M12 16l-4.5-4.5"/><path d="M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1"/></svg>
           Pobierz tabelę Excel
         </button>
+        <button id="do-tabeli" class="przycisk drugi szeroki" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 10h16M4 15h16M10 5v14"/></svg>
+          Zapisz w tabeli inwestycji
+        </button>
         <p id="podsumowanie" class="podsumowanie"></p>
       </div>
     </aside>
@@ -67,6 +71,23 @@
       <div class="okno-przyciski">
         <button value="anuluj" class="przycisk duch" type="submit" formnovalidate>Anuluj</button>
         <button value="zapisz" class="przycisk glowny" type="submit">Zapisz</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="okno-tabeli" class="okno">
+    <form method="dialog">
+      <h2>Zapisz w Tabeli materiałowej</h2>
+      <p class="drobny">Pozycje trafią do arkusza „Tabela materiałowa” w folderze inwestycji na Dysku (INWESTYCJE_3) – tej samej, do której szef magazynu zapisuje wnioski z tabletu. Ponowny zapis tych samych skanów zastępuje ich wcześniejsze wiersze.</p>
+      <label class="pole"><span>Inwestycja</span><input id="szukaj-inwestycji" type="search" placeholder="Szukaj inwestycji…" autocomplete="off"></label>
+      <div id="lista-inwestycji" class="lista-inwestycji"></div>
+      <label class="pole"><span>Rodzaj instalacji</span>
+        <select id="rodzaj-instalacji"><option value="PV">PV</option><option value="PC">PC – pompy ciepła</option><option value="KOLEKTORY">Kolektory</option><option value="kotły">Kotły</option></select>
+      </label>
+      <p id="stan-tabeli" class="drobny"></p>
+      <div class="okno-przyciski">
+        <button value="anuluj" class="przycisk duch" type="submit" formnovalidate>Anuluj</button>
+        <button id="zapisz-w-tabeli" class="przycisk glowny" type="button">Zapisz w tabeli</button>
       </div>
     </form>
   </dialog>

@@ -1,7 +1,10 @@
 import { otworzSkan } from './src/strony.js';
 import { czyZip, rozpakujZip } from './src/zip.js';
 import { odczytajSkan } from './src/odczyt.js';
-import { skoroszyt, nazwaPliku, uporzadkuj } from './src/tabela.js';
+import { skoroszyt, nazwaPliku, uporzadkuj, pozycjeDoTabeli, czyStaryWiersz } from './src/tabela.js';
+import * as google from './src/google.js';
+import * as tabelaMat from './src/tabela-materialowa.js';
+import { DYSK } from './config.js';
 
 const KLUCZ_LS = 'listy-materialowe:klucz';
 const ROWNOLEGLE = 4;
@@ -166,6 +169,82 @@ $('pobierz').addEventListener('click', async () => {
   pokazKomunikat(`Zapisano tabelę „${nazwa}” w folderze Pobrane.`);
 });
 
+// --- zapis do Tabeli materiałowej inwestycji (Dysk Google) ---------------------
+const KLUCZ_INWESTYCJI = 'listy-materialowe:inwestycja';
+const KLUCZ_RODZAJU = 'listy-materialowe:rodzaj';
+let inwestycje = null; // [{ id, nazwa }] z INWESTYCJE_3, wczytane raz na sesję
+let wybranaInwestycja = (() => { try { return JSON.parse(localStorage.getItem(KLUCZ_INWESTYCJI)); } catch { return null; } })();
+google.zaladujBiblioteke().catch(() => { /* bez internetu - komunikat przy zapisie */ });
+
+function opisBleduGoogle(e) {
+  const tekst = String(e?.message || e);
+  if (e?.status === 403) return 'To konto Google nie ma prawa zapisu w folderze tej inwestycji (albo nie widzi dysku INWESTYCJE_3). Zaloguj się kontem firmowym albo poproś o uprawnienia „Edytujący”.';
+  if (/przerwane|popup/i.test(tekst)) return 'Logowanie do Google przerwane. Kliknij „Zapisz w tabeli” jeszcze raz.';
+  if (/fetch|network|połączenia/i.test(tekst)) return 'Brak połączenia z Google. Sprawdź internet i spróbuj ponownie.';
+  return `Nie udało się zapisać w tabeli (${tekst}).`;
+}
+
+function rysujInwestycje() {
+  const fraza = $('szukaj-inwestycji').value.trim().toLowerCase();
+  const lista = inwestycje || (wybranaInwestycja ? [wybranaInwestycja] : []);
+  const widoczne = lista.filter(i => !fraza || i.nazwa.toLowerCase().includes(fraza));
+  $('lista-inwestycji').replaceChildren(...(widoczne.length ? widoczne.map(i => {
+    const b = el('button', { type: 'button', textContent: i.nazwa });
+    b.setAttribute('aria-pressed', String(i.id === wybranaInwestycja?.id));
+    b.addEventListener('click', () => {
+      wybranaInwestycja = { id: i.id, nazwa: i.nazwa };
+      try { localStorage.setItem(KLUCZ_INWESTYCJI, JSON.stringify(wybranaInwestycja)); } catch { /* tryb prywatny */ }
+      rysujInwestycje();
+    });
+    return b;
+  }) : inwestycje ? [el('p', { textContent: 'Brak inwestycji o tej nazwie.' })] : []));
+}
+$('szukaj-inwestycji').addEventListener('input', rysujInwestycje);
+
+$('do-tabeli').addEventListener('click', async () => {
+  $('stan-tabeli').textContent = '';
+  $('szukaj-inwestycji').value = '';
+  try { $('rodzaj-instalacji').value = localStorage.getItem(KLUCZ_RODZAJU) || 'PV'; } catch { /* tryb prywatny */ }
+  rysujInwestycje();
+  $('okno-tabeli').showModal();
+  if (inwestycje) return;
+  $('stan-tabeli').textContent = 'Wczytuję inwestycje z Dysku…';
+  try {
+    inwestycje = await google.listaInwestycji(DYSK.inwestycje);
+    $('stan-tabeli').textContent = '';
+  } catch (e) {
+    console.error(e);
+    $('stan-tabeli').textContent = opisBleduGoogle(e);
+  }
+  rysujInwestycje();
+});
+
+$('zapisz-w-tabeli').addEventListener('click', async () => {
+  const gotowe = skany.filter(s => s.stan === 'gotowe');
+  if (!wybranaInwestycja) { $('stan-tabeli').textContent = 'Wybierz inwestycję z listy.'; return; }
+  const rodzaj = $('rodzaj-instalacji').value;
+  try { localStorage.setItem(KLUCZ_RODZAJU, rodzaj); } catch { /* tryb prywatny */ }
+  const przycisk = $('zapisz-w-tabeli');
+  przycisk.disabled = true;
+  $('stan-tabeli').textContent = 'Zapisuję w tabeli…';
+  try {
+    const id = await tabelaMat.tabelaMaterialowa(google, wybranaInwestycja.id);
+    const { dopisano, usunieto } = await tabelaMat.zapiszPozycje(google, id, {
+      nowe: pozycjeDoTabeli(gotowe, rodzaj),
+      czyStary: czyStaryWiersz(gotowe.map(s => s.nazwa))
+    });
+    pobranoPoZmianach = true;
+    $('okno-tabeli').close();
+    pokazKomunikat(`Zapisano ${pozycji(dopisano)} w „Tabeli materiałowej” inwestycji ${wybranaInwestycja.nazwa}` +
+      (usunieto ? ` (zastąpiły ${usunieto} wcześniej zapisanych z tych skanów).` : '.'));
+  } catch (e) {
+    console.error(e);
+    $('stan-tabeli').textContent = opisBleduGoogle(e);
+  } finally {
+    przycisk.disabled = false;
+  }
+});
+
 window.addEventListener('beforeunload', e => {
   if (!pobranoPoZmianach && skany.some(s => s.stan === 'gotowe')) e.preventDefault();
 });
@@ -215,6 +294,7 @@ function odswiezPrzyciski() {
 
   const pobierz = $('pobierz');
   pobierz.disabled = !gotowe.length;
+  $('do-tabeli').disabled = !gotowe.length || czyta;
   pobierz.classList.toggle('gotowy', gotowe.length > 0 && !czyta);
 
   const postep = $('postep');
@@ -242,7 +322,7 @@ function powitanie() {
     el('div', { className: 'kroki' },
       ...[['Dodaj skany', 'Przeciągnij pliki PDF albo całą paczkę ZIP na pole po lewej albo kliknij je, by wybrać.'],
         ['Odczytaj', 'Kliknij „Odczytaj skany”. Jeden skan to zwykle kilkanaście sekund.'],
-        ['Sprawdź i pobierz', 'Popraw pozycje podświetlone na pomarańczowo i pobierz tabelę.']]
+        ['Sprawdź i zapisz', 'Popraw pozycje podświetlone na pomarańczowo, pobierz Excel albo zapisz w Tabeli materiałowej inwestycji.']]
         .map(([t, o], i) => el('div', { className: 'krok' }, el('b', { textContent: i + 1 }), el('h3', { textContent: t }), el('p', { textContent: o })))));
   if (bezKlucza) {
     const b = el('button', { className: 'przycisk glowny', type: 'button', textContent: 'Wpisz klucz dostępu' });
