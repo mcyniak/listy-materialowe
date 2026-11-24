@@ -108,6 +108,12 @@ export async function utworzArkuszGoogle(idFolderu, nazwa) {
   return (await (await api(`${DRIVE}/files?supportsAllDrives=true&fields=id`, json('POST', { name: nazwa, mimeType: MIME.arkusz, parents: [idFolderu] }))).json()).id;
 }
 
+// Ustawienia regionalne arkusza (separator argumentów w formułach).
+export async function lokalizacjaTabeli(idTabeli) {
+  const meta = await (await api(`https://sheets.googleapis.com/v4/spreadsheets/${idTabeli}?fields=properties.locale`)).json();
+  return meta.properties?.locale || 'en_US';
+}
+
 export async function arkuszeTabeli(idTabeli) {
   return (await (await api(`${SHEETS}/${idTabeli}?fields=sheets.properties(sheetId,title,gridProperties)`)).json()).sheets.map(s => s.properties);
 }
